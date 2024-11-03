@@ -13,11 +13,17 @@ public class GameController : MonoBehaviour
     Direction dirPlaneToBeacon;
     Direction dirRelativePlaneToBeacon; // dirPlaneToBeacon from the axis of the plane
 
+    Direction directionGuess = Direction.Null; // the direction the plane is facing
+    Direction locationGuess = Direction.Null; // which square around the beacon the plane is in
+
+    TMPro.TextMeshProUGUI guessText;
+    TMPro.TextMeshProUGUI answerText;
 
     void Awake()
     {
         gyrocompass = GameObject.Find("GYRO Compass");
         arrow = GameObject.Find("Arrow");
+        guessText = GameObject.Find("Guess Text").GetComponent<TMPro.TextMeshProUGUI>();
 
         dirPlaneTravel = Direction.East;
         dirBeaconToPlane = Direction.SouthWest;
@@ -52,7 +58,7 @@ public class GameController : MonoBehaviour
         arrow.transform.rotation = Quaternion.Euler(0, 0, -angle);
     }
 
-    public static Direction GetDirection(int angle) 
+    private Direction GetDirection(int angle) 
     {
         try 
         {
@@ -65,24 +71,46 @@ public class GameController : MonoBehaviour
         }
     }
 
-    public static Direction GetRandomDirection() {
+    private Direction GetRandomDirection() {
         return (Direction) (Random.Range(0, 8) * 45);
     }
 
-    //private void RotateObject(GameObject obj, Direction direction) 
-    //{
-      //  obj.transform.rotation = Quaternion.Euler(0, 0, -GetAngle(direction));
-    //}
+    public void GuessDirection(Direction direction) {
+        locationGuess = Direction.Null; // location can only be set after a guess, so reset when a new guess is made
+        directionGuess = direction;
 
-    //private void RotateGyrocompass() 
-    //{
-    //    RotateObject(gyrocompass, dirPlaneTravel);
-    //}
+        UpdateGuessText();
+    }
 
-    //private void RotateArrow() 
-    //{
-    //    return;
-    //}
+    public void GuessLocation(Direction direction) {
+        if(directionGuess == Direction.Null) { //need a direction guess first (for placing plane sprite)
+            Debug.Log("Guess the direction first");
+            return;
+        }
+        locationGuess = direction;
 
+        UpdateGuessText();
+    }
     
+    private void UpdateGuessText() {
+        guessText.text = "Guessed Direction: " + directionGuess + "\n Guessed Location: " + locationGuess;
+    }
+
+    private void UpdateAnswerText() {
+        answerText.text = "True Direction: " + dirPlaneTravel + "\nTrue Location: " + dirBeaconToPlane;
+    }
+
+    private void SubmitGuess() {
+        if(directionGuess == Direction.Null || locationGuess == Direction.Null) {
+            Debug.Log("Need to guess both direction and location");
+            return;
+        }
+        if(directionGuess == dirPlaneTravel && locationGuess == dirBeaconToPlane) {
+            Debug.Log("Correct!");
+        }
+        else {
+            Debug.Log("Incorrect");
+        }
+        UpdateAnswerText();
+    }
 }

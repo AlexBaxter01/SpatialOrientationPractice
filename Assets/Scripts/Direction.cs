@@ -13,7 +13,8 @@ namespace Directions {
         South = 180,
         SouthWest = 225,
         West = 270,
-        NorthWest = 315
+        NorthWest = 315,
+        Null = 360
     }
 
     public static class DirectionExt {
