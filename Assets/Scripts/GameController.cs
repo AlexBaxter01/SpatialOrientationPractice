@@ -19,8 +19,17 @@ public class GameController : MonoBehaviour
     TMPro.TextMeshProUGUI guessText;
     TMPro.TextMeshProUGUI answerText;
 
+    TMPro.TextMeshProUGUI timerText;
+
+    TMPro.TextMeshProUGUI statsText;
+
     bool isCorrect = false;
     bool hasGuessed = true;
+
+    int questionsAnswered = 0;
+    int questionsCorrect = 0;
+
+    private float timeLeft = 180.0f;
 
     void Awake()
     {
@@ -28,14 +37,26 @@ public class GameController : MonoBehaviour
         arrow = GameObject.Find("Arrow");
         guessText = GameObject.Find("Guess Text").GetComponent<TMPro.TextMeshProUGUI>();
         answerText = GameObject.Find("Answer Text").GetComponent<TMPro.TextMeshProUGUI>();
-
+        timerText = GameObject.Find("Timer Text").GetComponent<TMPro.TextMeshProUGUI>();
+        statsText = GameObject.Find("Stats Text").GetComponent<TMPro.TextMeshProUGUI>();
         StartNewQuestion();
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
-        
+        if(timeLeft <= 0) {
+            Debug.Log("Time's up!");
+            guessText.text = "";
+            answerText.text = "";
+            timerText.text = "Time's up!";
+            statsText.text = "Questions Answered: " + questionsAnswered + "\nQuestions Correct: " + questionsCorrect + "\nScore: " + (int) (100 * (float) questionsCorrect / questionsAnswered) + "%";
+            return;
+        }
+        else {
+            timeLeft -= Time.deltaTime;
+            timerText.text = "Time Left: " + (int) timeLeft;
+        }
     }
     
     private void RotateGyrocompass() {
@@ -138,6 +159,7 @@ public class GameController : MonoBehaviour
             return;
         }
         if(directionGuess == dirPlaneTravel && locationGuess == dirBeaconToPlane) {
+            questionsCorrect++;
             Debug.Log("Correct!");
             isCorrect = true;
         }
@@ -145,11 +167,22 @@ public class GameController : MonoBehaviour
             Debug.Log("Incorrect");
             isCorrect = false;
         }
+        questionsAnswered++;
+        hasGuessed = true;
         UpdateAnswerText();
     }
 
-    public void StartNewQuestion() {
-        if(hasGuessed) {
+    public void StartNewQuestion() 
+    {
+        if(!hasGuessed) {
+            Debug.Log("Need to submit a guess first");
+            return;
+        }
+        if(timeLeft <= 0) {
+            Debug.Log("Time's up!");
+            return;
+        }
+
         dirPlaneTravel = GetRandomDirection();
         dirBeaconToPlane = GetRandomDirection();
         
@@ -169,11 +202,5 @@ public class GameController : MonoBehaviour
         
         isCorrect = false;
         hasGuessed = false;
-
-        }
-
-        else {
-            Debug.Log("Need to submit a guess first");
-        }
     }
 }
