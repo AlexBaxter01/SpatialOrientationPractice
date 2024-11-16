@@ -29,7 +29,7 @@ public class GameController : MonoBehaviour
     int questionsAnswered = 0;
     int questionsCorrect = 0;
 
-    private float timeLeft = 180.0f;
+    private float timeLeft = 10.0f;
 
     void Awake()
     {
@@ -44,19 +44,14 @@ public class GameController : MonoBehaviour
 
     // Update is called once per frame
     void FixedUpdate()
-    {
+    {   
+        UpdateText();
         if(timeLeft <= 0) {
             Debug.Log("Time's up!");
-            guessText.text = "";
-            answerText.text = "";
-            timerText.text = "Time's up!";
-            statsText.text = "Questions Answered: " + questionsAnswered + "\nQuestions Correct: " + questionsCorrect + "\nScore: " + (int) (100 * (float) questionsCorrect / questionsAnswered) + "%";
             return;
         }
-        else {
-            timeLeft -= Time.deltaTime;
-            timerText.text = "Time Left: " + (int) timeLeft;
-        }
+        timeLeft -= Time.deltaTime;
+        
     }
     
     private void RotateGyrocompass() {
@@ -94,8 +89,6 @@ public class GameController : MonoBehaviour
         Direction direction = GetDirectionFromString(dir);
         locationGuess = Direction.Null; // location can only be set after a guess, so reset when a new guess is made
         directionGuess = direction;
-
-        UpdateGuessText();
     }
 
     public void GuessLocation(string dir) {
@@ -105,8 +98,6 @@ public class GameController : MonoBehaviour
             return;
         }
         locationGuess = direction;
-
-        UpdateGuessText();
     }
     
     private Direction GetDirectionFromString(string dir) {
@@ -133,7 +124,22 @@ public class GameController : MonoBehaviour
         }
     }
     
+    private void UpdateText() {      
+        UpdateGuessText();
+        UpdateAnswerText();
+        UpdateTimerText();
+        UpdateStatsText();
+    }
+
     private void UpdateGuessText() {
+        if(timeLeft <= 0) {
+            guessText.text = "";
+            return;
+        }
+        if(directionGuess == Direction.Null) {
+            guessText.text = "";
+            return;
+        }
         if(locationGuess == Direction.Null) {
             guessText.text = "Guessed Direction: " + directionGuess;
             return;
@@ -142,6 +148,14 @@ public class GameController : MonoBehaviour
     }
 
     private void UpdateAnswerText() {
+        if (timeLeft <= 0) {
+            answerText.text = "";
+            return;
+        }
+        if(!hasGuessed) {
+            answerText.text = "";
+            return;
+        }
         if(isCorrect) {
             answerText.text = "Correct!";
             return;
@@ -150,10 +164,32 @@ public class GameController : MonoBehaviour
             answerText.text = "Incorrect!" + "\nCorrect Direction: " + dirPlaneTravel + "\nCorrect Location: " + dirBeaconToPlane;
             return;
         }
-        //answerText.text = "True Direction: " + dirPlaneTravel + "\nTrue Location: " + dirBeaconToPlane;
+    }
+
+    private void UpdateTimerText() {
+        if(timeLeft <= 0) {
+            timerText.text = "Time's up!";
+            return;
+        }
+        timerText.text = "Time Left: " + (int) (timeLeft + 0.99f);
+    }
+
+    private void UpdateStatsText() {
+        if(timeLeft > 0) {
+            statsText.text = "";
+            return;
+        }
+
+        float score = 100 * (float) questionsCorrect / questionsAnswered;
+        int intScore = score > 100 || score < 0 ? 0 : (int) score;
+        statsText.text = "Questions Answered: " + questionsAnswered + "\nQuestions Correct: " + questionsCorrect + "\nScore: " + intScore + "%";
     }
 
     public void SubmitGuess() {
+        if(timeLeft <= 0) {
+            return;
+        }
+
         if(directionGuess == Direction.Null || locationGuess == Direction.Null) {
             Debug.Log("Need to guess both direction and location");
             return;
@@ -169,7 +205,6 @@ public class GameController : MonoBehaviour
         }
         questionsAnswered++;
         hasGuessed = true;
-        UpdateAnswerText();
     }
 
     public void StartNewQuestion() 
@@ -199,6 +234,7 @@ public class GameController : MonoBehaviour
         
         answerText.text = "";
         guessText.text = "";
+        statsText.text = "";
         
         isCorrect = false;
         hasGuessed = false;
